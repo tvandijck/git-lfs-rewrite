@@ -11,3 +11,13 @@ Unfortunately right now Git-LFS is so unstable and broken that the "git lfs push
 so actually pushing something just borks.
 
 Oh well... we'll keep investigating as it updates I guess...
+
+
+to unpack a repository into loose files:
+in a msysgit bash shell:
+$  mkdir looseRepo
+$  cd looseRepo
+$  git init --bare
+$  for P in $(find <path_to_packed_repo> -name '*.pack'); do git unpack-objects < "$P"; done
+
+
