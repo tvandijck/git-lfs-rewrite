@@ -14,10 +14,10 @@ Oh well... we'll keep investigating as it updates I guess...
 
 
 to unpack a repository into loose files:
-in a msysgit bash shell:
-$  mkdir looseRepo
-$  cd looseRepo
-$  git init --bare
-$  for P in $(find <path_to_packed_repo> -name '*.pack'); do git unpack-objects < "$P"; done
+in a msysgit bash shell:<br>
+$  mkdir looseRepo<br>
+$  cd looseRepo<br>
+$  git init --bare<br>
+$  for P in $(find <path_to_packed_repo> -name '*.pack'); do git unpack-objects < "$P"; done<br>
 
 
