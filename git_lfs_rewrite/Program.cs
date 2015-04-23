@@ -90,9 +90,57 @@ namespace git_lfs_rewrite
             }
         }
 
+        public static byte[] MakeAttributes()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var ext in s_extentions)
+            {
+                sb.AppendFormat("*{0} filter=lfs -crlf\n", ext);
+            }
+            return Encoding.UTF8.GetBytes(sb.ToString());
+        }
+
+        public static GitCommit InjectAttributes(GitRepository repo)
+        {
+            // create a new blob for the .attributes file.
+            var attribSha1 = repo.WriteObject("blob", MakeAttributes());
+            var blob = new GitBlob(attribSha1);
+            var entry = new GitTree.Entry()
+            {
+                Mode = 0x100644,
+                Name = ".gitattributes",
+                ObjectHash = "",
+                Object = blob
+            };
+            var tree = new GitTree(new[] { entry });
+            var commit = new GitCommit(tree,
+                "lfs-rewrite <lfs-rewrite@blizzard.com> 1380309170 -0400",
+                "lfs-rewrite <lfs-rewrite@blizzard.com> 1380309170 -0400", 
+                "\nadded .gitattributes");
+
+            // add new commit to all commits that have no parent, or add the entry to the tree.
+            foreach (var obj in repo.All())
+            {
+                var c = obj as GitCommit;
+                if (c != null)
+                {
+                    if (c.Parents == null)
+                    {
+                        c.AddParent(commit);
+                    }
+                    else
+                    {
+                        c.Tree.Add(entry);
+                    }
+                }
+            }
+
+            return commit;
+        }
+
         static void Main(string[] args)
         {
-            var repository = new GitRepository("C:\\dev\\sc2-git");
+            var repository = new GitRepository("C:\\dev\\premake-lfs\\.git");
 
             // process the repository to make LFS objects where needed.
             Console.WriteLine("LFS...");
@@ -105,6 +153,10 @@ namespace git_lfs_rewrite
                 }
             }
 
+            // inject .gitattribute file
+            InjectAttributes(repository);
+
+            // save repository.
             repository.Save();
 
 

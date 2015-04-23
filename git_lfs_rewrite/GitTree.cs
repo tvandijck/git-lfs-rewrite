@@ -38,6 +38,12 @@ namespace git_lfs_rewrite
             }
         }
 
+        public GitTree(IEnumerable<Entry> entries)
+            : base(null)
+        {
+            m_entries.AddRange(entries);
+        }
+
         public override void Resolve(GitRepository repo)
         {
             bool hasInvalidRefs = false;
@@ -60,6 +66,33 @@ namespace git_lfs_rewrite
             }
         }
 
+        public void Add(Entry entry)
+        {
+            foreach (var e in m_entries)
+            {
+                if (e.Name == entry.Name)
+                    return;
+            }
+
+            m_entries.Add(new Entry()
+            {
+                Mode = entry.Mode,
+                Name = entry.Name,
+                ObjectHash = string.Empty,
+                Object = entry.Object
+            });
+        }
+
+        class SortByName : IComparer<Entry>
+        {
+            public int Compare(Entry x, Entry y)
+            {
+                string nX = x.Name + (IsDirectory(x) ? "/" : string.Empty);
+                string nY = y.Name + (IsDirectory(y) ? "/" : string.Empty);
+                return string.Compare(nX, nY, StringComparison.Ordinal);
+            }
+        }
+
         public override bool Save(GitRepository repo)
         {
             m_saved = true;
@@ -67,6 +100,7 @@ namespace git_lfs_rewrite
             if (!IsDirty())
                 return false;
 
+            m_entries.Sort(new SortByName());
             using (var stream = new MemoryStream())
             {
                 foreach (var e in m_entries)
@@ -92,6 +126,11 @@ namespace git_lfs_rewrite
 
         public IEnumerable<Entry> Entries { get { return m_entries; } }
 
+
+        private static bool IsDirectory(Entry x)
+        {
+            return ((x.Mode & 0x040000) == 0x040000);
+        }
 
         private static string ModeToString(int mode)
         {

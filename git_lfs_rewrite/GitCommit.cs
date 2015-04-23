@@ -9,7 +9,7 @@ namespace git_lfs_rewrite
     {
         private string m_treeHash;
         private GitTree m_tree;
-        private readonly List<string> m_parentHash;
+        private List<string> m_parentHash;
         private List<GitCommit> m_parent;
         private readonly string m_author;
         private readonly string m_committer;
@@ -59,6 +59,15 @@ namespace git_lfs_rewrite
             m_message = sb.ToString();
         }
 
+        public GitCommit(GitTree tree, string author, string committer, string message)
+            : base(null)
+        {
+            m_tree = tree;
+            m_author = author;
+            m_committer = committer;
+            m_message = message;
+        }
+
         public GitTree Tree
         {
             get { return m_tree; }
@@ -67,6 +76,20 @@ namespace git_lfs_rewrite
         public IEnumerable<GitCommit> Parents
         {
             get { return m_parent; }
+        }
+
+        public void AddParent(GitCommit commit)
+        {
+            if (m_parent == null)
+            {
+                m_parent = new List<GitCommit>();
+                m_parentHash = new List<string>();
+            }
+            if (!m_parent.Contains(commit))
+            {
+                m_parent.Add(commit);
+                m_parentHash.Add(string.Empty);
+            }
         }
 
         public override void Resolve(GitRepository repo)
